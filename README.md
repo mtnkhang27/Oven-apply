@@ -26,9 +26,13 @@
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup
+Create Database, Check docker file :D
+```bash
+$ docker compose -f docker-compose.local.yml up -d    
+```
 
 ```bash
-$ yarn install
+$ yarn
 ```
 
 ## Compile and run the project
@@ -38,7 +42,7 @@ $ yarn install
 $ yarn run start
 
 # watch mode
-$ yarn run start:dev
+$ yarn start
 
 # production mode
 $ yarn run start:prod
