@@ -10,6 +10,8 @@ import { I18nModule } from 'nestjs-i18n';
 import { i18nConfig } from './config/i18n.config';
 import swaggerConfig from './config/swagger.config';
 import { typeOrmConfig } from './config/typeorm.config';
+import { ProductsModule } from './modules/products/products.module';
+import { ProductAttachmentsModule } from './modules/product-attachments/product-attachments.module';
 
 let staticModules;
 if (process.env.NODE_ENV === 'production') {
@@ -34,6 +36,8 @@ if (process.env.NODE_ENV === 'production') {
     TypeOrmModule.forRootAsync(typeOrmConfig),
     I18nModule.forRootAsync(i18nConfig),
     LanguagesModule,
+    ProductsModule,
+    ProductAttachmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
