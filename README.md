@@ -67,7 +67,11 @@ yarn install
 ```
 
 ### 5. Start Application
-
+Before running application, please run 
+```bash
+yarn seed
+```
+This project is configured for multilingual support, so the database must contain at least one language entry before the app can start.
 **Development mode:**
 ```bash
 yarn dev
@@ -262,5 +266,5 @@ taskkill /PID <PID> /F
 - Pagination on list endpoints
 - Connection pooling for database
 
-
+# 
 **Built with NestJS** - A progressive Node.js framework
