@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { exec } from 'child_process';
 
 export function toPascalCase(str: string): string {
   return str

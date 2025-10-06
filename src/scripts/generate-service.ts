@@ -55,14 +55,15 @@ function extractManyToOneFields(content: string): string[] {
  * Đọc file controller, lấy tất cả các name trong @UploadFiles([...])
  */
 function extractUploadFieldsFromController(content: string): string[] {
-  const regex = /@UploadFiles\(\s*\[\s*([\s\S]*?)\s*\],\s*['"`][\w-]+['"`]\s*\)/gm;
+  const regex =
+    /@UploadFiles\(\s*\[\s*([\s\S]*?)\s*\],\s*['"`][\w-]+['"`]\s*\)/gm;
   const fields = new Set<string>();
 
   let match;
   while ((match = regex.exec(content)) !== null) {
     const arrBlock = match[1]; // nội dung mảng [{ name: 'xxx', ... }, ...]
     const nameMatches = [...arrBlock.matchAll(/name\s*:\s*['"`](\w+)['"`]/g)];
-    nameMatches.forEach(m => fields.add(m[1]));
+    nameMatches.forEach((m) => fields.add(m[1]));
   }
 
   return Array.from(fields);
@@ -99,9 +100,10 @@ if (hasUpload && fs.existsSync(controllerPath)) {
 }
 
 // Tạo string param files với các trường upload, ví dụ: image?: Multer.File[]; banner?: Multer.File[]
-const filesParamString = uploadFields.length > 0
-  ? uploadFields.map(f => `${f}?: Multer.File[]`).join('; ')
-  : 'picture?: Multer.File[]';
+const filesParamString =
+  uploadFields.length > 0
+    ? uploadFields.map((f) => `${f}?: Multer.File[]`).join('; ')
+    : 'picture?: Multer.File[]';
 
 let output = `import { Injectable } from '@nestjs/common';
 import { Create${className}Dto } from './dto/create-${singular}.dto';

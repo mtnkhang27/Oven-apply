@@ -10,6 +10,7 @@
     "generate-dto": "ts-node src/scripts/generate-dto.ts",
     "generate-module": "ts-node src/scripts/generate-module.ts",
     "generate-service": "ts-node src/scripts/generate-service.ts",
+    "generate": "ts-node src/scripts/index.ts",
     "seed": "ts-node src/seeds/index.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

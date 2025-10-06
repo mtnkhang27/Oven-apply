@@ -4,6 +4,15 @@ import * as path from 'path';
 import * as pluralize from 'pluralize';
 import { toPascalCase } from './functions';
 
+function isEnumTypeNode(prop): boolean {
+  const type = prop.getType();
+  const symbol = type.getSymbol();
+  if (!symbol) return false;
+
+  const declarations = symbol.getDeclarations();
+  return declarations.some((decl) => decl.getKindName() === 'EnumDeclaration');
+}
+
 function cleanType(typeText: string): string {
   const match = typeText.match(/import\(".*"\)\.(.*)/);
   return match ? match[1] : typeText;
@@ -34,7 +43,7 @@ function isRelationProperty(prop) {
 const moduleName = process.argv[2];
 const singularModuleName = pluralize.singular(moduleName);
 const className = toPascalCase(singularModuleName);
-const classNamePlural = pluralize.plural(className); // Advertisements
+const classNamePlural = pluralize.plural(className);
 console.log('singularModule', singularModuleName);
 
 if (!singularModuleName) {
@@ -61,8 +70,11 @@ const project = new Project();
 const sourceFile = project.addSourceFileAtPath(entityPath);
 const entityClass = sourceFile.getClasses()[0];
 const properties = entityClass.getProperties();
+const importDeclarations = sourceFile.getImportDeclarations();
 
 const excludeFields = ['id', 'createdAt', 'updatedAt', 'deletedAt'];
+const usedEnums = new Set<string>();
+const usedEnumImports = new Map<string, string>();
 
 function getDecorator(type: string, optional = false): string[] {
   const decorators: string[] = [];
@@ -86,9 +98,17 @@ function getDecorator(type: string, optional = false): string[] {
   return decorators;
 }
 
-function getSwaggerDecorator(type: string, isFile = false): string {
+function getSwaggerDecorator(
+  type: string,
+  isFile = false,
+  enumType?: string,
+): string {
   if (isFile)
     return `@ApiProperty({ type: 'string', format: 'binary', required: false })`;
+
+  if (enumType)
+    return `@ApiProperty({ enum: ${enumType}, enumName: '${enumType}' })`;
+
   return `@ApiProperty()`;
 }
 
@@ -107,9 +127,7 @@ for (const prop of properties) {
   const isRelation =
     relationType === 'ManyToOne' || relationType === 'OneToOne';
 
-  if (relationType === 'OneToMany' || relationType === 'ManyToMany') {
-    continue; // ❌ Skip OneToMany & ManyToMany in Create DTO
-  }
+  if (relationType === 'OneToMany' || relationType === 'ManyToMany') continue;
 
   let name = originalName;
   let tsType = type;
@@ -126,33 +144,27 @@ for (const prop of properties) {
 
   const decorators: string[] = [];
 
-  // Swagger decorator
-  decorators.push(getSwaggerDecorator(type, isFile));
-
-  // Special case: status enum
-  if (originalName === 'status') {
-    decorators.push(`@IsEnum(Status)`);
+  if (isEnumTypeNode(prop)) {
+    usedEnums.add(type);
+    decorators.push(getSwaggerDecorator(type, false, type));
+    decorators.push(`@IsEnum(${type})`);
     decorators.unshift(isOptional ? `@IsOptional()` : `@IsNotEmpty()`);
-  }
-  // Special case: description -> use IsNotBlank
-  else if (originalName === 'description') {
+  } else if (originalName === 'description') {
+    if (isOptional) decorators.unshift(`@IsOptional()`);
     decorators.push(`@IsNotBlank()`);
     decorators.push(`@IsString()`);
-    if (isOptional) decorators.unshift(`@IsOptional()`);
-  }
-  // Special case: picture
-  else if (isFile) {
+    decorators.push(getSwaggerDecorator(type));
+  } else if (isFile) {
+    decorators.push(getSwaggerDecorator(type, true));
     decorators.push(`@IsOptional()`);
-  }
-  // Relation
-  else if (isRelation) {
-    decorators.push(`@IsPositive()`);
+  } else if (isRelation) {
+    decorators.push(getSwaggerDecorator(type));
     if (isOptional) decorators.unshift(`@IsOptional()`);
     else decorators.unshift(`@IsNotEmpty()`);
+    decorators.push(`@IsPositive()`);
     decorators.push(`@Type(() => Number)`);
-  }
-  // Normal types
-  else {
+  } else {
+    decorators.push(getSwaggerDecorator(type));
     if (!isOptional) decorators.push(`@IsNotEmpty()`);
     decorators.push(...getDecorator(type, isOptional));
   }
@@ -161,14 +173,16 @@ for (const prop of properties) {
     `\n  ${decorators.join('\n  ')}\n  ${name}${isOptional ? '?' : ''}: ${tsType};`,
   );
 
-  // Filter DTO: Only basic types
+  // Filter DTO
   if (!originalName.endsWith('_url')) {
     let filterType: string;
+    let swaggerLine = `@ApiProperty({ required: false })`;
 
     if (isRelation) {
-      filterType = 'number'; // Use entity class name
-    } else if (originalName === 'status') {
-      filterType = 'Status'; // Use enum type
+      filterType = 'number';
+    } else if (isEnumTypeNode(prop)) {
+      filterType = type;
+      swaggerLine = `@ApiProperty({ enum: ${type}, enumName: '${type}', required: false })`;
     } else if (['string', 'number', 'boolean'].includes(type)) {
       filterType = type;
     } else {
@@ -176,9 +190,19 @@ for (const prop of properties) {
     }
 
     filterDtoFields.push(`
-  @ApiProperty({ required: false })
+  ${swaggerLine}
   @IsOptional()
   ${name}?: ${filterType};`);
+  }
+}
+
+// Collect enum imports
+for (const enumName of usedEnums) {
+  const importDecl = importDeclarations.find((id) =>
+    id.getNamedImports().some((ni) => ni.getName() === enumName),
+  );
+  if (importDecl) {
+    usedEnumImports.set(enumName, importDecl.getText());
   }
 }
 
@@ -196,7 +220,6 @@ function getImports() {
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { Multer } from 'multer';
-import { Status } from '../../../common/enums/status.enum';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
 import { IsNotBlank } from '../../../common/validation/is-not-blank.validation';`;
 }
@@ -205,11 +228,14 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const enumImportString = [...usedEnumImports.values()].join('\n');
+
 fs.mkdirSync(dtoDir, { recursive: true });
 
 fs.writeFileSync(
   createDtoFile,
   `${getImports()}
+${enumImportString}
 
 export class Create${capitalize(className)}Dto {${createDtoFields.join('\n')}
 }
@@ -219,6 +245,7 @@ export class Create${capitalize(className)}Dto {${createDtoFields.join('\n')}
 fs.writeFileSync(
   filterDtoFile,
   `${getImports()}
+${enumImportString}
 
 export class ${capitalize(className)}FilterDto extends PaginationDto {${filterDtoFields.join('\n')}
 }
