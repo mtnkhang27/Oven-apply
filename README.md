@@ -1,102 +1,266 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Product Management API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Project Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A RESTful API system for product management with features including:
+- Full CRUD operations for products
+- Advanced search engine with filters and full-text search
+- File attachment management with tree-structure organization
+- Secure file upload/download with UUID-based naming
+- File tree visualization and statistics
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Framework**: NestJS
+- **ORM**: TypeORM
+- **Database**: PostgreSQL
+- **Runtime**: Node.js
+- **Package Manager**: Yarn
+- **Containerization**: Docker & Docker Compose
 
-## Project setup
-Create Database, Check docker file :D
-```bash
-$ docker compose -f docker-compose.local.yml up -d    
-```
+## Installation & Setup
+
+### 1. Clone Repository
 
 ```bash
-$ yarn
+git clone https://github.com/mtnkhang27/Oven-apply.git
+cd Oven-apply
 ```
 
-## Compile and run the project
+### 2. Environment Configuration
+
+Create `.env` file from template:
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn start
-
-# production mode
-$ yarn run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+Edit `.env` file with your configuration:
+
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=product_management
+
+# Application
+PORT=9000
+NODE_ENV=development
+```
+
+### 3. Start Database with Docker
 
 ```bash
-# unit tests
-$ yarn run test
+# Start PostgreSQL container
+docker-compose up -d --build
 
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+# Verify database is running
+docker-compose ps
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 4. Install Dependencies
 
 ```bash
-$ yarn install -g mau
-$ mau deploy
+yarn install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 5. Start Application
 
-## Resources
+**Development mode:**
+```bash
+yarn dev
+```
+The API will be available at: `http://localhost:9000`
 
-Check out a few resources that may come in handy when working with NestJS:
+## API Documentation
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Swagger UI
 
-## Support
+Once the application is running, access the interactive API documentation:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+http://localhost:9000/api
+```
 
-## Stay in touch
+### Main Endpoints
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+#### Products
 
-## License
+- `GET /products` - List all products with pagination and search advanced
+- `GET /products/:id` - Get product details
+- `POST /products` - Create new product
+- `PATCH /products/:id` - Update product
+- `DELETE /products/:id` - Delete product
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### Product Attachments
+
+- `POST /products/:productId/attachments/upload` - Upload file
+- `GET /products/:productId/attachments/tree` - Get file tree structure
+- `GET /products/:productId/attachments/list` - List all files
+- `GET /products/:productId/attachments/stats` - Get statistics
+- `GET /products/:productId/attachments/download` - Download file by path
+- `DELETE /products/:productId/attachments` - Delete file
+- `DELETE /products/:productId/attachments/folder` - Delete folder
+
+## Features
+
+### 1. Product Management
+
+**Search capabilities:**
+- Apply search engine by name. For example:
+  - Product 1: PD Xiaomi 35W. Product 2: PD Samsung 35W. 
+  - User input: PD 35W -> The result would return both of result.
+- Filter by price range, status
+- Pagination support
+
+
+### 2. File Attachment System
+
+**Security features:**
+- UUID-based file naming (prevents path traversal)
+- Extension whitelist validation
+- Path depth limitation
+
+**Supported file types:**
+- Images: jpg, jpeg, png, gif
+- Documents: pdf, doc, docx, txt
+- Archives: zip
+- Spreadsheets: xlsx, csv
+
+**File organization:**
+```
+uploads/
+└── {productId}/
+    ├── images/
+    │   └── {uuid}.jpg
+    ├── documents/
+    │   └── {uuid}.pdf
+    └── videos/
+        └── {uuid}.mp4
+```
+
+**Upload example:**
+```bash
+curl -X POST \
+  http://localhost:9000/products/1/attachments/upload?folder=images \
+  -F "file=@photo.jpg"
+```
+
+**Response:**
+```json
+{
+  "statusCode": 201,
+  "message": "File uploaded successfully",
+  "data": {
+    "id": 123,
+    "originalName": "photo.jpg",
+    "storedName": "a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+    "path": "images/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+    "size": 102400,
+    "extension": "jpg",
+    "mimeType": "image/jpeg",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+**Download file:**
+```bash
+curl -X GET \
+  "http://localhost:9000/products/1/attachments/download?path=images/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg" \
+  -O photo.jpg
+```
+
+### 3. File Tree Structure
+
+Get hierarchical folder/file structure:
+
+```bash
+GET /products/1/attachments/tree
+```
+
+**Response:**
+```json
+{
+  "name": "root",
+  "type": "folder",
+  "path": "/",
+  "children": [
+    {
+      "name": "images",
+      "type": "folder",
+      "path": "images",
+      "children": [
+        {
+          "name": "a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+          "type": "file",
+          "path": "images/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+          "originalName": "photo.jpg",
+          "size": 102400,
+          "extension": "jpg",
+          "mimeType": "image/jpeg",
+          "createdAt": "2024-01-01T00:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Project Structure
+
+```
+src/
+├── modules/
+│   ├── products/
+│   │   ├── entities/
+│   │   ├── dto/
+│   │   ├── products.controller.ts
+│   │   ├── products.service.ts
+│   │   └── products.module.ts
+│   └── product-attachments/
+│       ├── entities/
+│       ├── product-attachments.controller.ts
+│       ├── product-attachments.service.ts
+│       └── product-attachments.module.ts
+├── utils/
+│   ├── file-tree.util.ts
+│   └── hashmap.util.ts
+├── config/
+├── migrations/
+└── main.ts
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+```bash
+# Change PORT in .env file
+PORT=9001
+
+# Or kill process using port 9000 (Linux/Mac)
+lsof -ti:9000 | xargs kill -9
+
+# Windows
+netstat -ano | findstr :9000
+taskkill /PID <PID> /F
+```
+
+## Security Considerations
+
+- Path traversal attacks are prevented via path sanitization
+- Files are stored with UUID names to prevent guessing
+- Environment variables should never be committed
+
+## Performance Optimization
+
+- In-memory file tree for fast lookups
+- Database indexes on frequently queried fields
+- Pagination on list endpoints
+- Connection pooling for database
+
+
+**Built with NestJS** - A progressive Node.js framework
