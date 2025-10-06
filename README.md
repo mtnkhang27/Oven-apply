@@ -72,6 +72,7 @@ Before running application, please run
 yarn seed
 ```
 This project is configured for multilingual support, so the database must contain at least one language entry before the app can start.
+
 **Development mode:**
 ```bash
 yarn dev
