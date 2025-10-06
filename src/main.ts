@@ -47,10 +47,10 @@ async function bootstrap() {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle(process.env.SWAGGER_SITE_TITLE || 'Tikera API docs')
-    .setDescription(process.env.SWAGGER_DOC_DESCRIPTION || 'SGTL Project')
+    .setTitle(process.env.SWAGGER_SITE_TITLE || 'Oven API docs')
+    .setDescription(process.env.SWAGGER_DOC_DESCRIPTION || 'Oven apply tests')
     .setVersion(process.env.SWAGGER_DOC_VERSION || '1.0')
-    .addBearerAuth()
+    // .addBearerAuth()
     .addGlobalParameters({
       in: 'header',
       required: true,
@@ -84,15 +84,7 @@ async function bootstrap() {
     logger.log(`[${req.method}] ${req.url}`);
     next();
   });
-  let port;
-  if (process.env.NODE_ENV == 'development') {
-    port = process.env.DEV_PORT;
-  } else if (process.env.NODE_ENV == 'production') {
-    console.log = function () {};
-    port = process.env.PROD_PORT;
-  } else {
-    port = process.env.LOCAL_PORT;
-  }
+  const port = Number(process.env.PORT);
   await app.listen(port);
   logger.log(`🚀 Server is running on http://localhost:${port}`);
 
