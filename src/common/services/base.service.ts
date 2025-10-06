@@ -42,99 +42,103 @@ export class BaseService<Entity extends ObjectLiteral> {
     return [];
   }
 
+  protected buildQuery(
+    query: any,
+    relations: string[] = [],
+  ): SelectQueryBuilder<Entity> {
+    const lang = getCurrentLang();
+    const queryBuilder = this.repository.createQueryBuilder(this.alias);
+
+    // 🏷️ 1. Join translations nếu có
+    const hasTranslationRelation =
+      this.repository.metadata.findRelationWithPropertyPath('translations');
+
+    if (hasTranslationRelation) {
+      queryBuilder
+        .leftJoinAndSelect(`${this.alias}.translations`, 'translation')
+        .leftJoinAndSelect('translation.language', 'language')
+        .andWhere('language.code = :lang', { lang });
+    }
+
+    // 🧩 2. Join các quan hệ mặc định
+    relations.forEach((relation) => {
+      const relationMetadata =
+        this.repository.metadata.findRelationWithPropertyPath(relation);
+      if (relationMetadata) {
+        queryBuilder.leftJoinAndSelect(`${this.alias}.${relation}`, relation);
+        const relationTarget = relationMetadata.inverseEntityMetadata;
+        const hasTranslation =
+          relationTarget.findRelationWithPropertyPath('translations');
+        if (hasTranslation) {
+          const translationAlias = `${relation}Translation`;
+          const languageAlias = `${translationAlias}Lang`;
+          queryBuilder
+            .leftJoinAndSelect(`${relation}.translations`, translationAlias)
+            .leftJoinAndSelect(`${translationAlias}.language`, languageAlias)
+            .andWhere(`${languageAlias}.code = :lang`, { lang });
+        }
+      } else {
+        console.warn(
+          `⚠️ Relation "${relation}" không tồn tại trong entity "${this.repository.metadata.name}"`,
+        );
+      }
+    });
+
+    // 🎯 3. Gọi custom filter từ subclass
+    this.applyCustomFilter(queryBuilder, query);
+
+    // 🎚️ 4. Áp dụng các filter mặc định
+    const skippedKeys = this.getSkippedFilterKeys();
+    Object.keys(query).forEach((key) => {
+      if (
+        query[key] !== undefined &&
+        ![
+          'page',
+          'entry',
+          'sort',
+          'field',
+          'offset',
+          'filters',
+          ...skippedKeys,
+        ].includes(key)
+      ) {
+        if (key.endsWith('From')) {
+          addCondition(
+            queryBuilder,
+            key.replace('From', ''),
+            query[key],
+            this.alias,
+            '>=',
+            'from',
+          );
+        } else if (key.endsWith('To')) {
+          addCondition(
+            queryBuilder,
+            key.replace('To', ''),
+            query[key],
+            this.alias,
+            '<=',
+            'to',
+          );
+        } else {
+          addCondition(queryBuilder, key, query[key], this.alias);
+        }
+      }
+    });
+
+    return queryBuilder;
+  }
+
   async findAll(query: any, relations: string[] = []) {
     try {
       const { page, entry, sort, field, offset } = getPaginationParams(query);
-      const lang = getCurrentLang();
-      const queryBuilder = this.repository.createQueryBuilder(this.alias);
+      const qb = this.buildQuery(query, relations);
 
-      const hasTranslationRelation =
-        this.repository.metadata.findRelationWithPropertyPath('translations');
+      applyPaginationAndFilters(qb, offset, entry, field, sort, this.alias);
 
-      if (hasTranslationRelation) {
-        queryBuilder
-          .leftJoinAndSelect(`${this.alias}.translations`, 'translation')
-          .leftJoinAndSelect('translation.language', 'language')
-          .andWhere('language.code = :lang', { lang });
-      }
+      const data = await qb.getMany();
+      const total = await qb.getCount();
 
-      relations.forEach((relation) => {
-        const relationMetadata =
-          this.repository.metadata.findRelationWithPropertyPath(relation);
-        if (relationMetadata) {
-          queryBuilder.leftJoinAndSelect(`${this.alias}.${relation}`, relation);
-          const relationTarget = relationMetadata.inverseEntityMetadata;
-          const hasTranslation =
-            relationTarget.findRelationWithPropertyPath('translations');
-          if (hasTranslation) {
-            const translationAlias = `${relation}Translation`;
-            const languageAlias = `${translationAlias}Lang`;
-            queryBuilder
-              .leftJoinAndSelect(`${relation}.translations`, translationAlias)
-              .leftJoinAndSelect(`${translationAlias}.language`, languageAlias)
-              .andWhere(`${languageAlias}.code = :lang`, { lang });
-          }
-        } else {
-          console.warn(
-            `⚠️ Relation "${relation}" không tồn tại trong entity "${this.repository.metadata.name}"`,
-          );
-        }
-      });
-
-      // 🔥 Gọi hàm hook để filter tùy chỉnh từ subclass
-      this.applyCustomFilter(queryBuilder, query);
-
-      const skippedKeys = this.getSkippedFilterKeys();
-
-      // Xử lý các filter mặc định (trừ các key đã xử lý riêng)
-      Object.keys(query).forEach((key) => {
-        if (
-          query[key] !== undefined &&
-          ![
-            'page',
-            'entry',
-            'sort',
-            'field',
-            'offset',
-            'filters',
-            ...skippedKeys,
-          ].includes(key)
-        ) {
-          if (key.endsWith('From')) {
-            addCondition(
-              queryBuilder,
-              key.replace('From', ''),
-              query[key],
-              this.alias,
-              '>=',
-              'from',
-            );
-          } else if (key.endsWith('To')) {
-            addCondition(
-              queryBuilder,
-              key.replace('To', ''),
-              query[key],
-              this.alias,
-              '<=',
-              'to',
-            );
-          } else {
-            addCondition(queryBuilder, key, query[key], this.alias);
-          }
-        }
-      });
-
-      applyPaginationAndFilters(
-        queryBuilder,
-        offset,
-        entry,
-        field,
-        sort,
-        this.alias,
-      );
-
-      const data = await queryBuilder.getMany();
-      const total = await queryBuilder.getCount();
       return formatPaginationResult(data, page, entry, total);
     } catch (error) {
       handleDatabaseError(error);
@@ -263,15 +267,6 @@ export class BaseService<Entity extends ObjectLiteral> {
           delete updateDto[relationKey];
         }
       });
-      // ✅ Parse nếu translations là string (từ multipart/form-data)
-      // if (typeof updateDto.translations === 'string') {
-
-      // }
-      // try {
-      //   updateDto.translations = JSON.parse(updateDto.translations);
-      // } catch (e) {
-      //   throw new BadRequestException('Invalid JSON format for translations');
-      // }
 
       // ✅ Chỉ xử lý translations nếu được gửi lên và là mảng hợp lệ
       if (
@@ -480,7 +475,6 @@ export class BaseService<Entity extends ObjectLiteral> {
         throw new NotFoundException(`Entity with ID ${id} not found`);
       }
       return entity;
-      return queryBuilder.getOne();
     } catch (error) {
       handleDatabaseError(error);
       throw error;
@@ -526,7 +520,4 @@ export class BaseService<Entity extends ObjectLiteral> {
       throw error;
     }
   }
-}
-function leftJoinAndSelect(arg0: string, arg1: string) {
-  throw new Error('Function not implemented.');
 }

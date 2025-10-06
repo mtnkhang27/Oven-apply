@@ -9,8 +9,14 @@ const singular = pluralize.singular(moduleName);
 const className = toPascalCase(singular);
 const classNamePlural = pluralize.plural(className); // e.g. "Advertisement" → "Advertisements"
 
-const entityPath = path.join(__dirname, `../modules/${moduleName}/entities/${singular}.entity.ts`);
-const moduleFilePath = path.join(__dirname, `../modules/${moduleName}/${moduleName}.module.ts`);
+const entityPath = path.join(
+  __dirname,
+  `../modules/${moduleName}/entities/${singular}.entity.ts`,
+);
+const moduleFilePath = path.join(
+  __dirname,
+  `../modules/${moduleName}/${moduleName}.module.ts`,
+);
 
 const project = new Project();
 const entityFile = project.addSourceFileAtPath(entityPath);
@@ -80,8 +86,12 @@ const controllerImport = `import { ${classNamePlural}Controller } from '${toCont
 const mainServiceImport = `import { ${classNamePlural}Service } from './${moduleName}.service';`;
 
 // Combine all service names
-const relatedServiceNames = importEntities.map(e => `${capitalize(pluralize.plural(e))}Service`);
-const serviceNames = [`${classNamePlural}Service`, ...relatedServiceNames].join(', ');
+const relatedServiceNames = importEntities.map(
+  (e) => `${capitalize(pluralize.plural(e))}Service`,
+);
+const serviceNames = [`${classNamePlural}Service`, ...relatedServiceNames].join(
+  ', ',
+);
 
 // Entity list
 const entityNames = [className, ...importEntities];
